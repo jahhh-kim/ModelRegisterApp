@@ -1,0 +1,70 @@
+﻿
+@inject IModelRepository repository
+@inject IJSRuntime JS
+
+<div class="modal" tabindex="-1" role="dialog" id="modelRegisterPopup">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@EditorFormTitle</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+
+                <EditForm Model="EditorModel" OnValidSubmit="@FormSubmitProcess">
+                    <DataAnnotationsValidator></DataAnnotationsValidator>
+                    <ValidationSummary></ValidationSummary>
+                    <input type="hidden" @bind-value="@EditorModel.ModelCode" />
+
+                    <div class="form-group">
+                        <label for="partId">부품코드</label>
+                        <InputText id="modelcode" class="form-control" @bind-Value="@EditorModel.PartId"></InputText>
+                        <ValidationMessage For="@(() => EditorModel.ModelCode)"></ValidationMessage>
+                    </div>
+                    <div class="form-group">
+                        <label for="ModelName">모델이름</label>
+                        <InputText id="code" class="form-control" @bind-Value="@EditorModel.ModelName"></InputText>
+                        <ValidationMessage For="@(() => EditorModel.ModelName)"></ValidationMessage>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">등록</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                </EditForm>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    [Parameter]
+    public RenderFragment EditorFormTitle { get; set; }
+
+    [Parameter]
+    public Model EditorModel { get; set; }
+
+    [Parameter]
+    public Action SaveOrUpdated { get; set; }
+
+    private async void FormSubmitProcess()
+    {
+        if (EditorModel.ModelCode == 0)
+        {
+            // 저장
+            await repository.AddModelAsync(EditorModel);
+        }
+        else
+        {
+            // 수정
+            await repository.EditModelAsync(EditorModel);
+        }
+
+        await JS.InvokeAsync<object>("closeModal", "modelRegisterPopup"); // 모달 창 닫기
+
+        SaveOrUpdated?.Invoke(); // 넘어온 함수 참조를 실행
+    }
+
+}
